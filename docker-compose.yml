@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  ai-batch-processor:
+    build: .
+    container_name: ai-batch-processor
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=False
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+    networks:
+      - ai-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: ai-batch-processor-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - ai-batch-processor
+    networks:
+      - ai-network
+
+networks:
+  ai-network:
+    driver: bridge
+
+volumes:
+  uploads:
+  outputs:
+  logs:

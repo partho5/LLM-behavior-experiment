@@ -296,6 +296,12 @@
             color: #155724;
         }
         
+        .alert-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+        
         .variable-hint {
             background: #fff3cd;
             border: 1px solid #ffeaa7;
@@ -828,13 +834,35 @@ Make it engaging and informative.</textarea>
             
             if (errors.length > 0) {
                 showAlert(`Validation errors: ${errors.join(', ')}`, 'error');
+                return false;
             } else {
                 showAlert('✅ Configuration looks good! Ready to process.', 'success');
+                return true;
             }
         }
         
         function startProcessing() {
-            validateConfig();
+            // Validate configuration first
+            const errors = [];
+            
+            if (!uploadedFile) {
+                errors.push('No file uploaded');
+            }
+            
+            if (!document.getElementById('apiKey').value.trim()) {
+                errors.push('API key is required');
+            }
+            
+            if (!document.getElementById('mainPrompt').value.trim()) {
+                errors.push('Main prompt template is required');
+            }
+            
+            if (errors.length > 0) {
+                showAlert(`Validation errors: ${errors.join(', ')}`, 'error');
+                return; // Stop processing if validation fails
+            }
+            
+            showAlert('✅ Configuration looks good! Starting processing...', 'success');
             
             const config = {
                 data_file: uploadedFile.filename,
@@ -975,16 +1003,43 @@ Make it engaging and informative.</textarea>
         }
         
         function showAlert(message, type) {
+            console.log(`Showing alert: ${message} (${type})`); // Debug log
+            
             const alertsContainer = document.getElementById('alerts');
+            if (!alertsContainer) {
+                console.error('Alerts container not found!');
+                // Fallback to browser alert
+                alert(`${type.toUpperCase()}: ${message}`);
+                return;
+            }
+            
             const alert = document.createElement('div');
-            alert.className = `alert alert-${type}`;
+            
+            // Map type to correct CSS class
+            let cssClass = 'alert-info'; // default
+            if (type === 'error') {
+                cssClass = 'alert-danger';
+            } else if (type === 'success') {
+                cssClass = 'alert-success';
+            } else if (type === 'warning') {
+                cssClass = 'alert-warning';
+            }
+            
+            alert.className = `alert ${cssClass}`;
             alert.textContent = message;
+            alert.style.display = 'block'; // Ensure visibility
+            alert.style.zIndex = '9999'; // Ensure it's on top
             
             alertsContainer.appendChild(alert);
             
+            // Scroll to alert to make sure it's visible
+            alert.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
             // Remove after 5 seconds
             setTimeout(() => {
-                alert.remove();
+                if (alert.parentNode) {
+                    alert.remove();
+                }
             }, 5000);
         }
         
